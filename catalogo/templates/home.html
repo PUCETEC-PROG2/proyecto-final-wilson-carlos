@@ -1,0 +1,30 @@
+<html>
+<head>
+    <title>Catalogo de celulares y gadgets usados</title>
+</head>
+<body>
+    <h1>GADGETS Y CELULARES USADOS</h1>
+    <h2>Bienvenido a la tienda</h2>
+    <div class="productos">
+        {% for producto in productos %}
+            <div class="producto">
+                <h3>{{ producto.nombre }}</h3>
+                <p>{{ producto.descripcion }}</p>
+                <p>Precio: ${{ producto.precio }}</p>
+                <p>Categoría: {{ producto.categoria }}</p>
+                <p>Marca: {{ producto.marca }}</p>
+                <p>Modelo: {{ producto.modelo }}</p>
+                <p>Almacenamiento: {{ producto.almacenamiento }}</p>
+                <p>RAM: {{ producto.ram }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h2>Categorías</h2>
+    <ul>
+        <li><a href="{% url 'categoria_gadgets' %}">Gadgets</a></li>
+        <li><a href="{% url 'categoria_celulares' %}">Celulares</a></li>
+    </ul>
+</body>
+</html>
+

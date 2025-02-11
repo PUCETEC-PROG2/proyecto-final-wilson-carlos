@@ -1,0 +1,24 @@
+<html>
+<head>
+    <title>Celulares - Tienda</title>
+</head>
+<body>
+    <h1>Productos en la categoría Celulares</h1>
+    <div class="productos">
+        {% for producto in productos %}
+            <div class="producto">
+                <h3>{{ producto.nombre }}</h3>
+                <p>{{ producto.descripcion }}</p>
+                <p>Precio: ${{ producto.precio }}</p>
+                <p>Marca: {{ producto.marca }}</p>
+                <p>Modelo: {{ producto.modelo }}</p>
+                <p>Almacenamiento: {{ producto.almacenamiento }}</p>
+                <p>RAM: {{ producto.ram }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h2>Volver al inicio</h2>
+    <a href="{% url 'home' %}">Ir a la página principal</a>
+</body>
+</html>
