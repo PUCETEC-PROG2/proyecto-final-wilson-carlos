@@ -16,11 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from catalogo import views
+from catalogo import views  # Importa las vistas desde el archivo views.py
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('categoria/gadgets/', views.categoria_gadgets, name='categoria_gadgets'),  
+    path('categoria/gadgets/', views.categoria_gadgets, name='categoria_gadgets'),
     path('categoria/celulares/', views.categoria_celulares, name='categoria_celulares'),
+    path('clientes/', views.lista_clientes, name='clientes'),
+    path('clientes/agregar/', views.agregar_cliente, name='agregar_cliente'),
+    path('clientes/editar/<int:id_cliente>/', views.editar_cliente, name='editar_cliente'),
+    path('clientes/eliminar/<int:id_cliente>/', views.eliminar_cliente, name='eliminar_cliente'),
+    path('compras/', views.lista_compras, name='compras'),
+    path('compras/agregar/', views.agregar_compra, name='agregar_compra'),
+    path('compras/detalle/<int:id_venta>/', views.detalle_compra, name='detalle_compra'),
     path('admin/', admin.site.urls),
 ]
