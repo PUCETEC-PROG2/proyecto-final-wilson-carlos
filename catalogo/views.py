@@ -1,8 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from .models import Productos, CatalogoGadgets, CatalogoSmartphones, Clientes, Ventas
+from .models import Productos, CatalogoGadgets, CatalogoSmartphones, Clientes, Ventas, Transacciones, Salidas, MovimientosInventario
 from django.utils import timezone
 from .forms import ClienteForm
+from django.contrib import messages
+from django.db import IntegrityError
 
 # Create your views here.
 
@@ -67,51 +69,112 @@ def eliminar_cliente(request, id_cliente):
 # Vista para listar las compras
 def lista_compras(request):
     compras = Ventas.objects.all().order_by('-fecha')  # Ordenar por fecha descendente
+    print(compras)  # Agregar esta línea para verificar que se están obteniendo las compras
     return render(request, 'compras/lista_compras.html', {'compras': compras})
 
 # Vista para agregar las compras
 def agregar_compra(request):
-    if request.method == 'POST':
-        id_cliente = request.POST.get('id_cliente')
-        fecha = request.POST.get('fecha')
-        productos = request.POST.getlist('productos')  # Lista de productos seleccionados
-        cantidades = request.POST.getlist('cantidades')  # Lista de cantidades por producto
+    if request.method == "POST":
+        try:
+            cliente_id = request.POST.get("id_cliente")
+            fecha = request.POST.get("fecha")
+            productos_seleccionados = request.POST.getlist("productos[]")
+            cantidades = request.POST.getlist("cantidades[]")
 
-        # Obtener el cliente correspondiente
-        cliente = Clientes.objects.get(id_cliente=id_cliente)
+            # Validaciones básicas
+            if not cliente_id:
+                raise ValueError("Debe seleccionar un cliente.")
+            if not fecha:
+                raise ValueError("Debe seleccionar una fecha.")
+            if not productos_seleccionados:
+                raise ValueError("Debe seleccionar al menos un producto.")
 
-        # Calcular el total de la compra
-        total = 0
-        for i, id_producto in enumerate(productos):
-            producto = Productos.objects.get(id_producto=id_producto)
-            cantidad = int(cantidades[i])
-            total += producto.precio * cantidad
+            cliente = Clientes.objects.get(id_cliente=cliente_id)
 
-        # Crear la venta
-        venta = Ventas(id_cliente=cliente, fecha=fecha, total=total)
-        venta.save()
+            for i, producto_id in enumerate(productos_seleccionados):
+                try:
+                    cantidad = int(cantidades[i].strip()) if i < len(cantidades) and cantidades[i].strip() else 1
+                except ValueError:
+                    cantidad = 1  # Si el usuario ingresó un valor no numérico
 
-        # Crear las transacciones y actualizar el inventario
-        for i, id_producto in enumerate(productos):
-            producto = Productos.objects.get(id_producto=id_producto)
-            cantidad = int(cantidades[i])
-            producto.stock -= cantidad
-            producto.save()
+                producto = Productos.objects.get(id_producto=producto_id)
 
-            # Guardar transacción
-            transaccion = Transacciones(id_producto=producto, tipo='venta', cantidad=cantidad, fecha=timezone.now())
-            transaccion.save()
+                # Registrar la venta en la tabla Ventas
+                venta = Ventas.objects.create(
+                    id_cliente=cliente,
+                    id_producto=producto,
+                    cantidad=cantidad,
+                    fecha=fecha,
+                    total=producto.precio * cantidad
+                )
 
-        return redirect('compras')  # Redirigir a la lista de compras después de guardar
+                # Registrar la salida en la tabla Salidas
+                Salidas.objects.create(
+                    id_producto=producto,
+                    cantidad=cantidad,
+                    fecha=fecha,
+                    comentario=f"Venta registrada (ID Venta: {venta.id_venta})"
+                )
 
-    else:
-        clientes = Clientes.objects.all()
-        productos = Productos.objects.all()
-        return render(request, 'compras/agregar_compra.html', {'clientes': clientes, 'productos': productos})
+                # Registrar el movimiento en la tabla MovimientosInventario
+                MovimientosInventario.objects.create(
+                    producto=producto,
+                    fecha=fecha,
+                    cantidad=-cantidad,  # Se resta del inventario
+                    tipo_movimiento="Salida",
+                    comentario=f"Venta registrada (ID Venta: {venta.id_venta})"
+                )
+
+                # Registrar la transacción en la tabla Transacciones
+                Transacciones.objects.create(
+                    id_producto=producto,
+                    tipo="Venta",
+                    cantidad=cantidad,
+                    fecha=fecha,
+                    comentario=f"Venta realizada para el cliente {cliente.id_cliente}"
+                )
+
+            messages.success(request, "Compra registrada exitosamente y el inventario actualizado.")
+            return redirect("compras")  
+
+        except Clientes.DoesNotExist:
+            messages.error(request, "El cliente seleccionado no existe.")
+        except Productos.DoesNotExist:
+            messages.error(request, "Uno o más productos seleccionados no existen.")
+        except ValueError as e:
+            messages.error(request, str(e))
+        except IntegrityError:
+            messages.error(request, "Error en la base de datos.")
+
+    # Obtener datos para el formulario
+    clientes = Clientes.objects.all()
+    productos = Productos.objects.all()
+    return render(request, "compras/agregar_compra.html", {"clientes": clientes, "productos": productos})
     
 # Vista para detalles de las compras
 def detalle_compra(request, id_venta):
     compra = get_object_or_404(Ventas, id_venta=id_venta)
-    return render(request, 'compras/detalle_compra.html', {'compra': compra})
-
+    
+    # Obtener todos los productos relacionados con esta compra
+    productos_comprados = Ventas.objects.filter(id_venta=id_venta)
+    
+    # Calcular el total de la compra sumando los totales de cada producto
+    total_compra = sum([venta.id_producto.precio * venta.cantidad for venta in productos_comprados])
+    
+    # Calcular los totales por producto para pasarlos al template
+    productos_totales = [
+        {
+            'nombre': venta.id_producto.nombre,
+            'precio': venta.id_producto.precio,
+            'cantidad': venta.cantidad,
+            'total_producto': venta.id_producto.precio * venta.cantidad
+        }
+        for venta in productos_comprados
+    ]
+    
+    return render(request, 'compras/detalle_compra.html', {
+        'compra': compra,
+        'productos_totales': productos_totales,
+        'total_compra': total_compra
+    })
 

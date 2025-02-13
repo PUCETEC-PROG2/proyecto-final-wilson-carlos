@@ -23,13 +23,15 @@
 
         <div class="form-group">
             <label>Total:</label>
-            <p>${{ compra.total }}</p>
+            <p>${{ total_compra }}</p>  <!-- Mostrar el total calculado -->
         </div>
 
         <h3>Productos Comprados:</h3>
         <ul>
-            {% for producto in compra.productos.all %}
-            <li>{{ producto.nombre }} - ${{ producto.precio }} x {{ producto.cantidad }}</li>
+            {% for producto in productos_totales %}
+                <li>{{ producto.nombre }} - ${{ producto.precio }} x {{ producto.cantidad }} = ${{ producto.total_producto }}</li>
+            {% empty %}
+                <li>No hay productos comprados.</li>
             {% endfor %}
         </ul>
 
@@ -38,3 +40,4 @@
 
 </body>
 </html>
+

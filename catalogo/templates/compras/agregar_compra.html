@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Agregar Compra</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script> <!-- Para DatePicker -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
-        /* Estilo para la cuadrícula de productos */
         .producto-card {
             border: 1px solid #ddd;
             padding: 15px;
@@ -22,63 +21,18 @@
         .cantidad-input {
             width: 60px;
         }
-
-        /* Navbar con tamaño intermedio */
-        .navbar {
-            background-color: #343a40;
-            padding: 0.5rem 1rem; /* Ajuste intermedio del tamaño de la navbar */
-        }
-
-        .navbar .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .navbar-brand {
-            font-size: 1.4rem;  /* Aumento intermedio del tamaño del título */
-            font-weight: normal; /* Eliminar la negrita */
-            text-align: left;  /* Alineación a la izquierda */
-            padding: 0.25rem 0; /* Padding ajustado */
-        }
-
-        .navbar-nav {
-            flex-grow: 1;
-            justify-content: flex-end;  /* Alineación de los enlaces hacia la derecha */
-        }
-
-        .navbar-nav .nav-link {
-            padding-right: 10px; /* Espacio ligeramente mayor entre enlaces */
-            font-size: 1rem;  /* Aumento intermedio del tamaño de la fuente de los enlaces */
-            padding-top: 0.25rem; /* Ajuste de padding superior */
-            padding-bottom: 0.25rem; /* Ajuste de padding inferior */
-        }
-
-        .navbar-toggler {
-            margin-left: auto;
-        }
     </style>
 </head>
 <body>
 
-    <!-- Navbar con tamaño intermedio -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="#">Gadgets & Celulares</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Inicio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'compras' %}">Compras</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'agregar_compra' %}">Agregar Compra</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'compras' %}">Compras</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'agregar_compra' %}">Agregar Compra</a></li>
                 </ul>
             </div>
         </div>
@@ -104,29 +58,30 @@
                 <input type="text" name="fecha" id="fecha" class="form-control" required>
             </div>
 
-            <!-- Cuadrícula de productos con cantidad -->
             <h4 class="mt-3">Seleccionar Productos</h4>
             <div class="row">
-                {% for producto in productos %}
-                <div class="col-md-4 col-sm-6 producto-card">
-                    <p><strong>{{ producto.nombre }}</strong></p>
-                    <p>Modelo: {{ producto.modelo }}</p>
-                    <p>Precio: ${{ producto.precio }}</p>
+                <div id="productos_seleccionados">
+                    {% for producto in productos %}
+                    <div class="col-md-4 col-sm-6 producto-card">
+                        <p><strong>{{ producto.nombre }}</strong></p>
+                        <p>Modelo: {{ producto.modelo }}</p>
+                        <p>Precio: ${{ producto.precio }}</p>
 
-                    <label>
-                        <input type="checkbox" class="producto-checkbox" data-precio="{{ producto.precio }}" data-id="{{ producto.id_producto }}" data-nombre="{{ producto.nombre }}"/>
-                        Seleccionar
-                    </label>
+                        <label>
+                            <input type="checkbox" class="producto-checkbox" data-precio="{{ producto.precio }}" data-id="{{ producto.id_producto }}"/>
+                            Seleccionar
+                        </label>
 
-                    <div class="mt-2" style="display:none;">
-                        <label for="cantidad_{{ producto.id_producto }}">Cantidad:</label>
-                        <input type="number" id="cantidad_{{ producto.id_producto }}" class="cantidad-input" data-id="{{ producto.id_producto }}" value="1" min="1">
+                        <div class="mt-2 cantidad-container" style="display: none;">
+                            <label for="cantidad_{{ producto.id_producto }}">Cantidad:</label>
+                            <input type="number" name="cantidades[]" id="cantidad_{{ producto.id_producto }}" class="cantidad-input" data-id="{{ producto.id_producto }}" value="1" min="1">
+                        </div>
+                        <input type="hidden" name="productos[]" id="producto_{{ producto.id_producto }}" value="{{ producto.id_producto }}">
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
 
-            <!-- Total -->
             <div class="form-group mt-3">
                 <label for="total">Total:</label>
                 <input type="text" id="total" class="form-control" disabled>
@@ -137,31 +92,31 @@
     </div>
 
     <script>
-        // Activar el DatePicker para la fecha con calendario desplegable
         flatpickr("#fecha", { 
             dateFormat: "Y-m-d", 
-            allowInput: true, // Permitir escribir la fecha
-            altInput: true,  // Mostrar un campo de texto alternativo
-            altFormat: "F j, Y", // El formato en que se mostrará la fecha seleccionada
-            locale: "es", // Idioma en español
-            mode: "single"  // Modo de selección de una sola fecha
+            allowInput: true,
+            altInput: true,
+            altFormat: "F j, Y",
+            locale: "es",
+            mode: "single"
         });
 
-        // Función para calcular el total de la compra al seleccionar productos
         const checkboxes = document.querySelectorAll('.producto-checkbox');
-        const cantidadInputs = document.querySelectorAll('.cantidad-input');
         const totalInput = document.getElementById('total');
 
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
-                const cantidadDiv = this.closest('.producto-card').querySelector('div');
-                cantidadDiv.style.display = this.checked ? 'block' : 'none'; // Mostrar u ocultar el input de cantidad
-                calcularTotal(); // Recalcular el total
+                const cantidadDiv = this.closest('.producto-card').querySelector('.cantidad-container');
+                cantidadDiv.style.display = this.checked ? 'block' : 'none';
+
+                calcularTotal();
             });
         });
 
-        cantidadInputs.forEach(input => {
-            input.addEventListener('input', calcularTotal); // Calcular cuando cambie la cantidad
+        document.addEventListener('input', function(event) {
+            if (event.target.classList.contains('cantidad-input')) {
+                calcularTotal();
+            }
         });
 
         function calcularTotal() {
@@ -171,18 +126,17 @@
                 if (checkbox.checked) {
                     const precio = parseFloat(checkbox.dataset.precio);
                     const cantidadInput = document.getElementById(`cantidad_${checkbox.dataset.id}`);
-                    const cantidad = parseInt(cantidadInput.value);
+                    const cantidad = parseInt(cantidadInput.value) || 1;
 
-                    total += precio * cantidad; // Sumar el precio de ese producto multiplicado por la cantidad
+                    total += precio * cantidad;
                 }
             });
 
-            // Mostrar el total en el formulario
             totalInput.value = '$' + total.toFixed(2);
         }
     </script>
 
-    <!-- Scripts de Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
