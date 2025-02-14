@@ -4,6 +4,7 @@ from .models import Productos, CatalogoGadgets, CatalogoSmartphones, Clientes, V
 from .forms import ClienteForm
 from django.contrib import messages
 from django.db import IntegrityError
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
@@ -24,12 +25,14 @@ def categoria_celulares(request):
     return render(request, 'celulares.html', {'productos': celulares})
 
 # Vista para mostrar clientes
+@login_required
 def lista_clientes(request):
     clientes = Clientes.objects.all()
     form = ClienteForm()
     return render(request, 'clientes.html', {'clientes': clientes, 'form': form})
 
 # Vista para agregar cliente
+@login_required
 def agregar_cliente(request):
     if request.method == 'POST':
         form = ClienteForm(request.POST)
@@ -39,6 +42,7 @@ def agregar_cliente(request):
     return JsonResponse({'error': 'Formulario no válido'}, status=400)
 
 # Vista para editar cliente
+@login_required
 def editar_cliente(request, id_cliente):
     cliente = get_object_or_404(Clientes, id_cliente=id_cliente)
 
@@ -61,18 +65,21 @@ def editar_cliente(request, id_cliente):
         })
 
 # Vista para eliminar cliente
+@login_required
 def eliminar_cliente(request, id_cliente):
     cliente = get_object_or_404(Clientes, id_cliente=id_cliente)
     cliente.delete()
     return JsonResponse({'mensaje': 'Cliente eliminado correctamente'}, status=200)
 
 # Vista para listar las compras
+@login_required
 def lista_compras(request):
     compras = Ventas.objects.all().order_by('-fecha')  # Ordenar por fecha descendente
     print(compras)  # Agregar esta línea para verificar que se están obteniendo las compras
     return render(request, 'compras/lista_compras.html', {'compras': compras})
 
 # Vista para agregar las compras
+@login_required
 def agregar_compra(request):
     if request.method == "POST":
         try:
@@ -152,6 +159,7 @@ def agregar_compra(request):
     return render(request, "compras/agregar_compra.html", {"clientes": clientes, "productos": productos})
     
 # Vista para detalles de las compras
+@login_required
 def detalle_compra(request, id_venta):
     # Obtener la venta específica
     compra = get_object_or_404(Ventas, id_venta=id_venta)

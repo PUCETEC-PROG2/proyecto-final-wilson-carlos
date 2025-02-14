@@ -27,6 +27,11 @@
         .card {
             margin-top: 2rem; /* Espaciado superior para cada tarjeta de producto */
         }
+        .card img {
+            height: 420px; /* Ajusta el tamaño de la imagen del producto */
+            width: 100%; /* Asegura que la imagen ocupe todo el ancho del cuadro */
+            object-fit: cover; /* Mantiene la proporción de la imagen */
+        }
     </style>
 </head>
 <body>
@@ -69,6 +74,7 @@
             {% for producto in productos %}
             <div class="col-md-6 col-lg-4 mb-4">
                 <div class="card shadow-sm">
+                    <img src="{% static 'images/celular' %}{{ producto.id_catalogo }}.jpg" class="card-img-top" alt="{{ producto.nombre }}">
                     <div class="card-body">
                         <h5 class="card-title">{{ producto.nombre }}</h5>
                         <p class="card-text">{{ producto.descripcion }}</p>
