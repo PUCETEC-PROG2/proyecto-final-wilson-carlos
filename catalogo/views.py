@@ -1,7 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from .models import Productos, CatalogoGadgets, CatalogoSmartphones, Clientes, Ventas, Transacciones, Salidas, MovimientosInventario
-from django.utils import timezone
 from .forms import ClienteForm
 from django.contrib import messages
 from django.db import IntegrityError
@@ -10,8 +9,9 @@ from django.db import IntegrityError
 
 # Vista para mostrar el home
 def home(request):
-    productos = Productos.objects.all()[:4]  # Solo los 4 primeros productos
-    return render(request, 'home.html', {'productos': productos})
+    gadgets = CatalogoGadgets.objects.all()[:3]  # Los 3 primeros productos de gadgets
+    celulares = CatalogoSmartphones.objects.all()[:3]  # Los 3 primeros productos de celulares
+    return render(request, 'home.html', {'gadgets': gadgets, 'celulares': celulares})
 
 # Vista para mostrar la categoria de gadgets
 def categoria_gadgets(request):
@@ -153,28 +153,28 @@ def agregar_compra(request):
     
 # Vista para detalles de las compras
 def detalle_compra(request, id_venta):
+    # Obtener la venta específica
     compra = get_object_or_404(Ventas, id_venta=id_venta)
     
-    # Obtener todos los productos relacionados con esta compra
-    productos_comprados = Ventas.objects.filter(id_venta=id_venta)
+    # Obtener el producto relacionado con esta compra
+    producto_comprado = compra.id_producto
     
-    # Calcular el total de la compra sumando los totales de cada producto
-    total_compra = sum([venta.id_producto.precio * venta.cantidad for venta in productos_comprados])
+    # Calcular el total de la compra
+    total_compra = producto_comprado.precio * compra.cantidad
     
-    # Calcular los totales por producto para pasarlos al template
-    productos_totales = [
-        {
-            'nombre': venta.id_producto.nombre,
-            'precio': venta.id_producto.precio,
-            'cantidad': venta.cantidad,
-            'total_producto': venta.id_producto.precio * venta.cantidad
-        }
-        for venta in productos_comprados
-    ]
+    # Crear el diccionario con los detalles del producto
+    producto_detalle = {
+        'id_producto': producto_comprado.id_producto,
+        'nombre': producto_comprado.nombre,
+        'marca': producto_comprado.marca,
+        'modelo': producto_comprado.modelo,
+        'precio': producto_comprado.precio,
+        'cantidad': compra.cantidad,
+        'total_producto': total_compra
+    }
     
     return render(request, 'compras/detalle_compra.html', {
         'compra': compra,
-        'productos_totales': productos_totales,
+        'producto_detalle': producto_detalle,
         'total_compra': total_compra
     })
-
